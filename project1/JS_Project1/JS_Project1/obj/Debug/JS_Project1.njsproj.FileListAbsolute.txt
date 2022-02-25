@@ -1,0 +1,3 @@
+C:\Users\Xiao Fei yu\source\repos\JS_Project1\JS_Project1\obj\Debug\JS_Project1.njsproj.CoreCompileInputs.cache
+C:\Users\Xiao Fei yu\source\repos\JS_Project1\JS_Project1\bin\Microsoft.NodejsTools.WebRole.dll
+C:\Users\Xiao Fei yu\source\repos\JS_Project1\JS_Project1\obj\Debug\JS_Project1.njsproj.AssemblyReference.cache
