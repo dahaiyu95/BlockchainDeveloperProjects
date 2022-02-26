@@ -83,8 +83,6 @@ class Block {
         // Resolve with the data if the object isn't the Genesis block
 
         let self = this;
-        //const decodedData = hex2ascii(self.body);
-        //const block = JSON.parse(decodedData);
 
         return new Promise((resolve, reject) => {
             try {
