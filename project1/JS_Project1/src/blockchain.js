@@ -62,23 +62,45 @@ class Blockchain {
      * that this method is a private method. 
      */
     _addBlock(block) {
-        let self = this;
         return new Promise(async (resolve, reject) => {
+
+            let self = this;
+            // set previous hash before set current hash
             if (self.height == -1) {
                 block.previousBlockHash = null;
             } else {
                 block.previousBlockHash = this.hash;
             }
 
-
+            // set block info
             block.height = self.height + 1;
             block.time = new Date().getTime().toString().slice(0, -3);
             block.hash = SHA256(JSON.stringify(block)).toString();
 
-            block.hash = SHA256(JSON.stringify(block)).toString();
-            self.chain.push(block);
-            this.height += 1;
-            resolve(block);
+            try {
+                if (block.validate()) {
+                    self.chain.push(block);
+
+                    //update this.height
+                    self.height += 1;
+
+                    // return the block
+                    resolve(block);
+
+                }
+                else {
+                    console.error(new Error("Not Valid!"));
+                    reject(block)
+                    return;
+                }
+            }
+            catch (error) {
+                console.error(error);
+                reject(error)
+                return;
+            }
+            // push the block to chain
+
         });
     }
 
@@ -92,9 +114,10 @@ class Blockchain {
      */
     requestMessageOwnershipVerification(address) {
         return new Promise((resolve) => {
+            // get timestamp and message
             let timeStamp = new Date().getTime().toString().slice(0, -3);
             let message = `${address}:${timeStamp}:starRegistry`;
-            console.log('requestMessageOwnershipVerification: ' + message);
+            // return message for sign message
             resolve(message);
         });
     }
@@ -131,18 +154,23 @@ class Blockchain {
                 return;
             }
             //Veify the message with wallet address and signature
-            let verified = false;
-            //try {
-                verified = bitcoinMessage.verify(message, address, signature)
-            //}
-            //catch (exception) {
-            //    Error(exception);
-            //}
-            //Create the block and add it to the chain
+            let verified = bitcoinMessage.verify(message, address, signature);
+            if (verified) {
+                console.log("signature verified");
+            }
+            else {
+                var error = new Error('signature not verified');
+                console.log(error);
+                reject(error);
+                return;
+            }
+
+            // Create the block and add it to the chain(only address are needed.)
             let data = { address: address, message: message, signature: signature, star: star };
             let block = new BlockClass.Block(data);
-            //Resolve with the block added
             await this._addBlock(block);
+
+            //return the block
             resolve(block);
 
 
@@ -192,14 +220,24 @@ class Blockchain {
      * @param {*} address 
      */
     getStarsByWalletAddress(address) {
-        let self = this;
         let results = [];
+        let self = this;
         return new Promise((resolve, reject) => {
-            self.chain.forEach(async (b) => {
-                let blockData = await b.getBData();
-                if (blockData.address === address) results.push(blockData);
-            });
-            resolve(results);
+            try {
+                self.chain.forEach(async (b) => {
+                    let data = await b.getBData();
+                    if (data.address === address) {
+                        results.push(data);
+                    }
+                });
+                resolve(results);
+            }
+            catch (error) {
+                console.error(error);
+                reject(error);
+            }
+            
+
         });
     }
 
@@ -210,15 +248,31 @@ class Blockchain {
      * 2. Each Block should check the with the previousBlockHash
      */
     validateChain() {
-        let self = this;
         let invalidList = [];
         return new Promise(async (resolve, reject) => {
-            self.chain.forEach(block => {
-                if (!block.validate()) {
-                    invalidList.push(block);
+
+            if (this.height <= 0) {
+                reject(new Error("validate chain failed"));
+            }
+            try {
+                for (var i = 1; i <= this.height; i++) {
+                    let block = this.chain[i];
+                    let prevBlock = this.chain[i-1];
+                    if (!block.validate()) {
+                        invalidList.push(block);
+                        console.error(new Error("this block not valid"));
+                    }
+                    else if (prevBlock.hash != block.previousBlockHash) {
+                        invalidList.push(block);
+                        console.error(new Error("not matched with previous block hash"));
+                    }
                 }
-            });
-            resolve(invalidList)
+                resolve(invalidList)
+            }
+            catch (error) {
+                reject(error);
+                return;
+            }
 
         });
     }
