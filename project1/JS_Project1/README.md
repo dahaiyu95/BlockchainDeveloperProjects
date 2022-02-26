@@ -1,5 +1,7 @@
 # Private Blockchain Application
 
+## The screenshots are in the screenshots folder.
+
 ## Test the project
 
 ### Task 1: GET http://localhost:8000/block/height/0
